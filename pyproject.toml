@@ -1,0 +1,20 @@
+[project]
+name = "rag"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic",
+    "fire",
+    "flake8",
+    "mypy"
+]
+
+[tool.uv]
+package = false
+
+[tool.mypy]
+exclude = ["vllm/"]
+
+[[tool.mypy.overrides]]
+module = "fire.*"
+ignore_missing_imports = true

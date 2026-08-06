@@ -10,21 +10,24 @@ MYPY_FLAGS = --warn-return-any --warn-unused-ignores \
 RM = rm -rf
 
 install:
-	UV_PROJECT_ENVIRONMENT uv sync
+	UV_PROJECT_ENVIRONMENT=$(UV_PROJECT_ENVIRONMENT) uv sync
 
-run:
+run: install
+	$(PYTHON) student
 
 debug:
 
 clean:
+	$(RM) .mypy_cache/
+	$(RM) student/__pycache__
 
 lint:
 	$(PYTHON) flake8
-	$(PYTHON) mypy $(MYPY_FLAGS) src
+	$(PYTHON) mypy $(MYPY_FLAGS) student
 
 lint-strict:
 	$(PYTHON) flake8
-	$(PYTHON) mypy --strict
+	$(PYTHON) mypy --strict student
 
 destroy: clean
 	$(RM) rag

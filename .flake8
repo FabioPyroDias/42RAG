@@ -1,0 +1,6 @@
+[flake8]
+exclude =
+    data/
+    rag/
+    .venv/
+    moulinette/
