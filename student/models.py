@@ -127,3 +127,16 @@ class StudentSearchResultsAndAnswer(StudentSearchResults):
     """
 
     search_results: Sequence[MinimalAnswer]
+
+
+class Chunk(MinimalSource):
+    """Represents an extracted text chunk with its source location.
+
+    Extends MinimalSource to include the source file alongside
+        its character index span.
+
+    Attributes:
+        text (str): The raw text content of the chunk.
+    """
+
+    text: str

@@ -4,12 +4,19 @@ This module defines commands to index documents,
 search context and generate answers.
 """
 
+from student.config import RAGConfig
+
 
 class CommandLineInterface():
     """Class exposing CLI commands for the RAG pipeline.
 
     Each method corresponds to a specific CLI action.
     """
+
+    def __init__(self) -> None:
+        """Loads the default RAG pipeline configuration."""
+
+        self.config = RAGConfig()
 
     def index(self,
               max_chunk_size: int) -> None:
@@ -21,7 +28,6 @@ class CommandLineInterface():
 
         Returns:
             None
-
         """
 
         try:
