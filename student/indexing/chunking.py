@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List
 from student.file_manager import get_indexable_files, load_text_file
 from student.models import Chunk
+from student.indexing.utils import create_chunk
 
 
 def generate_file_chunks(path: Path,
@@ -24,7 +25,53 @@ def generate_file_chunks(path: Path,
         Returns:
             List[Chunk]: The list of generated Chunks
     """
-    pass
+
+    chunks = []
+
+    line = 0
+    current_content = ""
+    start_position = 0
+
+    data = content.split("\n")
+    while line < len(data):
+        is_last_line = line == len(data) - 1
+
+        if len(data[line]) + 1 <= max_chunk_size - len(current_content):
+            current_content += data[line]
+            if not is_last_line:
+                current_content += "\n"
+            line += 1
+        else:
+            if len(current_content) > 0:
+                chunks.append(create_chunk(path,
+                                           current_content,
+                                           start_position))
+
+                start_position += len(current_content)
+                current_content = ""
+
+            if len(data[line]) + 1 > max_chunk_size:
+                chunks.append(create_chunk(path,
+                                           data[line],
+                                           start_position))
+
+                start_position += len(data[line])
+                if not is_last_line:
+                    start_position += 1
+
+                line += 1
+            else:
+                current_content += data[line]
+                if not is_last_line:
+                    current_content += "\n"
+                line += 1
+
+    if len(current_content) > 0:
+        chunks.append(create_chunk(path,
+                                   current_content,
+                                   start_position))
+
+    return chunks
 
 
 def generate_chunks(path: Path, max_chunk_size: int) -> List[Chunk]:
