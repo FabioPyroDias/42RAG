@@ -5,6 +5,7 @@ search context and generate answers.
 """
 
 from pathlib import Path
+from pydantic import ValidationError
 from student.config import RAGConfig
 from student.indexing.chunking import generate_chunks
 from student.indexing.indexer import generate_bm25_index
@@ -36,8 +37,17 @@ class CommandLineInterface():
         """
 
         try:
+            self.config = RAGConfig(**{**self.config.model_dump(),
+                                       "max_chunk_size": max_chunk_size})
+
             chunks = generate_chunks(Path(self.config.raw_repository_path),
-                                     max_chunk_size)
+                                     self.config.max_chunk_size)
+
+            if not chunks:
+                raise ValueError(f"No indexable files found in "
+                                 f"\"{self.config.raw_repository_path}\". "
+                                 f"Verify that the path exists and contains "
+                                 f"supported files.")
 
             bm25 = generate_bm25_index(chunks,
                                        self.config.bm25_k1,
@@ -51,8 +61,10 @@ class CommandLineInterface():
             print(f"Ingestion complete! "
                   f"Indices saved under {self.config.processed_path}")
 
-        except TypeError:
-            pass
+        except ValidationError as error:
+            print(f"ERROR: {error.errors()[0]["msg"]}")
+        except ValueError as error:
+            print(F"ERROR: {error}")
 
     def search(self,
                query: str,

@@ -42,7 +42,7 @@ def generate_file_chunks(path: Path,
                 current_content += "\n"
             line += 1
         else:
-            if len(current_content) > 0:
+            if len(current_content.strip("\n")) > 0:
                 chunks.append(create_chunk(path,
                                            current_content,
                                            start_position))
@@ -51,9 +51,10 @@ def generate_file_chunks(path: Path,
                 current_content = ""
 
             if len(data[line]) + 1 > max_chunk_size:
-                chunks.append(create_chunk(path,
-                                           data[line],
-                                           start_position))
+                if len(data[line].strip("\n")) > 0:
+                    chunks.append(create_chunk(path,
+                                               data[line],
+                                               start_position))
 
                 start_position += len(data[line])
                 if not is_last_line:
@@ -66,7 +67,7 @@ def generate_file_chunks(path: Path,
                     current_content += "\n"
                 line += 1
 
-    if len(current_content) > 0:
+    if len(current_content.strip("\n")) > 0:
         chunks.append(create_chunk(path,
                                    current_content,
                                    start_position))

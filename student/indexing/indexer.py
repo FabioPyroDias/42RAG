@@ -6,13 +6,12 @@ handles saving and loading it for searches.
 
 from typing import List
 from student.models import Chunk
-from bm25s import BM25
 import bm25s
 
 
 def generate_bm25_index(chunks: List[Chunk],
                         bm25_k1: float,
-                        bm25_b: float) -> BM25:
+                        bm25_b: float) -> bm25s.BM25:
     """
     Generates a BM25 index from a list of text chunks.
 
@@ -22,15 +21,19 @@ def generate_bm25_index(chunks: List[Chunk],
         bm25_b (float): Document length normalization parameter.
 
     Returns:
-        BM25: The trained BM25 index instance.
+        bm25s.BM25: The trained BM25 index instance.
     """
+
+    if not chunks:
+        raise ValueError("Cannot build BM25 index. "
+                         "No chunks provided to index")
 
     texts = []
     for chunk in chunks:
         texts.append(chunk.text)
 
     tokens = bm25s.tokenize(texts)
-    retriever = BM25(k1=bm25_k1, b=bm25_b)
+    retriever = bm25s.BM25(k1=bm25_k1, b=bm25_b)
     retriever.index(tokens)
 
     return retriever
