@@ -140,3 +140,14 @@ class Chunk(MinimalSource):
     """
 
     text: str
+
+
+class ChunkCollection(BaseModel):
+    """
+    A collection of generated text chunks.
+
+    Attributes:
+        chunks (List[Chunk]): List of extracted text chunks.
+    """
+
+    chunks: List[Chunk]

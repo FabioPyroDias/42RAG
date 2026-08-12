@@ -63,6 +63,7 @@ class RAGConfig(BaseModel):
 
     raw_repository_path: str = Field(default="data/raw/vllm-0.10.1")
     datasets_root_path: str = Field(default="data/datasets")
+    processed_path: str = Field(default="data/processed")
     chunks_output_path: str = Field(default="data/processed/chunks")
     retrieval_index_path: str = Field(default="data/processed/bm25_index")
     output_search_path: str = Field(default="data/output/search_results")

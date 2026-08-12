@@ -20,6 +20,7 @@ debug:
 clean:
 	$(RM) .mypy_cache/
 	$(RM) student/__pycache__
+	$(RM) student/indexing/__pycache__
 
 lint:
 	$(PYTHON) flake8
@@ -31,3 +32,4 @@ lint-strict:
 
 destroy: clean
 	$(RM) rag
+	$(RM) .venv

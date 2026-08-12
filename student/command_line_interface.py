@@ -4,7 +4,12 @@ This module defines commands to index documents,
 search context and generate answers.
 """
 
+from pathlib import Path
 from student.config import RAGConfig
+from student.indexing.chunking import generate_chunks
+from student.indexing.indexer import generate_bm25_index
+from student.file_manager import save_json
+from student.models import ChunkCollection
 
 
 class CommandLineInterface():
@@ -31,7 +36,21 @@ class CommandLineInterface():
         """
 
         try:
-            pass
+            chunks = generate_chunks(Path(self.config.raw_repository_path),
+                                     max_chunk_size)
+
+            bm25 = generate_bm25_index(chunks,
+                                       self.config.bm25_k1,
+                                       self.config.bm25_b)
+
+            bm25.save(self.config.retrieval_index_path)
+
+            collection = ChunkCollection(chunks=chunks)
+            save_json(Path(self.config.chunks_output_path), collection)
+
+            print(f"Ingestion complete! "
+                  f"Indices saved under {self.config.processed_path}")
+
         except TypeError:
             pass
 
