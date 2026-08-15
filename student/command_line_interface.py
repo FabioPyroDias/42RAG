@@ -7,7 +7,7 @@ search context and generate answers.
 from pathlib import Path
 from pydantic import ValidationError
 from student.config import RAGConfig
-from student.file_manager import save_json
+from student.file_manager import save_json, load_dataset
 from student.models import (ChunkCollection,
                             MinimalSearchResults,
                             StudentSearchResults)
@@ -119,7 +119,34 @@ class CommandLineInterface():
             None
         """
 
-        pass
+        try:
+            bm25, chunks = (
+                load_retrieval_index(self.config.retrieval_index_path,
+                                     self.config.chunks_output_path))
+
+            dataset = load_dataset(Path(dataset_path))
+
+            search_results = []
+
+            for question in dataset.rag_questions:
+                sources = search_chunks(question.question, bm25, chunks, k)
+
+                search_results.append(
+                    MinimalSearchResults(
+                        question_id=question.question_id,
+                        question=question.question,
+                        retrieved_sources=sources))
+
+            student_search_results = StudentSearchResults(
+                search_results=search_results, k=k)
+
+            output_path = Path(save_directory) / Path(dataset_path).name
+            save_json(output_path, student_search_results)
+
+            print(f"Saved student_search_results to {output_path}")
+
+        except ValueError as error:
+            print(f"ERROR: {error}")
 
     def answer(self,
                query: str,

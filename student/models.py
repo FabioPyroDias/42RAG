@@ -85,7 +85,7 @@ class MinimalSearchResults(BaseModel):
     """
 
     question_id: str
-    question: str
+    question: str = Field(serialization_alias="question_str")
     retrieved_sources: List[MinimalSource]
 
 

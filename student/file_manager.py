@@ -165,7 +165,7 @@ def save_json(path: Path, data: BaseModel) -> None:
             #   translates complex memory structures into
             #   JSON-safe formats so that json.dumps() can safely
             #   convert it to text later.
-            formatted_data = data.model_dump(mode='json')
+            formatted_data = data.model_dump(mode='json', by_alias=True)
 
             # Converts the Python dict into a
             #   formatted JSON string, adding 4 spaces of
