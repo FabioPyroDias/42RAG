@@ -7,10 +7,13 @@ search context and generate answers.
 from pathlib import Path
 from pydantic import ValidationError
 from student.config import RAGConfig
+from student.file_manager import save_json
+from student.models import (ChunkCollection,
+                            MinimalSearchResults,
+                            StudentSearchResults)
 from student.indexing.chunking import generate_chunks
 from student.indexing.indexer import generate_bm25_index
-from student.file_manager import save_json
-from student.models import ChunkCollection
+from student.retrieval.retriever import load_retrieval_index, search_chunks
 
 
 class CommandLineInterface():
@@ -62,7 +65,7 @@ class CommandLineInterface():
                   f"Indices saved under {self.config.processed_path}")
 
         except ValidationError as error:
-            print(f"ERROR: {error.errors()[0]["msg"]}")
+            print(f"ERROR: {error.errors()[0]['msg']}")
         except ValueError as error:
             print(F"ERROR: {error}")
 
@@ -80,7 +83,23 @@ class CommandLineInterface():
             None
         """
 
-        pass
+        try:
+            bm25, chunks = (
+                load_retrieval_index(self.config.retrieval_index_path,
+                                     self.config.chunks_output_path))
+
+            sources = search_chunks(query, bm25, chunks, k)
+
+            search_result = StudentSearchResults(
+                search_results=[MinimalSearchResults(
+                    question_id="question_query",
+                    question=query,
+                    retrieved_sources=sources)], k=k)
+
+            print(search_result.model_dump_json(indent=4))
+
+        except ValueError as error:
+            print(F"ERROR: {error}")
 
     def search_dataset(self,
                        dataset_path: str,

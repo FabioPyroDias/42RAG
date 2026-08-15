@@ -21,6 +21,7 @@ clean:
 	$(RM) .mypy_cache/
 	$(RM) student/__pycache__
 	$(RM) student/indexing/__pycache__
+	$(RM) student/retrieval/__pycache__
 
 lint:
 	$(PYTHON) flake8
