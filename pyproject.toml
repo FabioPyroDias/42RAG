@@ -6,6 +6,9 @@ dependencies = [
     "pydantic",
     "fire",
     "bm25s",
+    "torch",
+    "transformers",
+    "tqdm",
     "flake8",
     "mypy"
 ]
@@ -13,13 +16,21 @@ dependencies = [
 [tool.uv]
 package = false
 
+[tool.uv.sources]
+torch = {index = "pytorch-cpu"}
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
 [tool.mypy]
-exclude = ["vllm/"]
+plugins = ["pydantic.mypy"]
+exclude = ["data/", "rag/", ".venv/"]
 
 [[tool.mypy.overrides]]
-module = "fire.*"
+module = ["fire.*", "bm25s", "bm25s.*",
+    "transformers", "transformers.*",
+    "torch", "torch.*", "tqdm"]
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["bm25s", "bm25s.*"]
-ignore_missing_imports = true
+follow_imports = "skip"

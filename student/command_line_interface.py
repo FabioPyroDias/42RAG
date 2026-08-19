@@ -5,15 +5,26 @@ search context and generate answers.
 """
 
 from pathlib import Path
+from tqdm import tqdm
 from pydantic import ValidationError
 from student.config import RAGConfig
-from student.file_manager import save_json, load_dataset
+from student.file_manager import save_json, load_dataset, load_json
 from student.models import (ChunkCollection,
                             MinimalSearchResults,
-                            StudentSearchResults)
+                            StudentSearchResults,
+                            MinimalAnswer,
+                            StudentSearchResultsAndAnswer,
+                            RagDataset,
+                            AnsweredQuestion)
 from student.indexing.chunking import generate_chunks
 from student.indexing.indexer import generate_bm25_index
-from student.retrieval.retriever import load_retrieval_index, search_chunks
+from student.retrieval.retriever import (load_retrieval_index,
+                                         search_chunks,
+                                         build_chunk_index,
+                                         match_chunks)
+from student.generation.augmenter import augment_context
+from student.generation.generator import load_model, generate_answer
+from student.evaluation.evaluator import evaluate_search_results
 
 
 class CommandLineInterface():
@@ -67,7 +78,7 @@ class CommandLineInterface():
         except ValidationError as error:
             print(f"ERROR: {error.errors()[0]['msg']}")
         except ValueError as error:
-            print(F"ERROR: {error}")
+            print(f"ERROR: {error}")
 
     def search(self,
                query: str,
@@ -88,7 +99,7 @@ class CommandLineInterface():
                 load_retrieval_index(self.config.retrieval_index_path,
                                      self.config.chunks_output_path))
 
-            sources = search_chunks(query, bm25, chunks, k)
+            sources = search_chunks(query, bm25, chunks, k)[1]
 
             search_result = StudentSearchResults(
                 search_results=[MinimalSearchResults(
@@ -99,7 +110,7 @@ class CommandLineInterface():
             print(search_result.model_dump_json(indent=4))
 
         except ValueError as error:
-            print(F"ERROR: {error}")
+            print(f"ERROR: {error}")
 
     def search_dataset(self,
                        dataset_path: str,
@@ -128,8 +139,8 @@ class CommandLineInterface():
 
             search_results = []
 
-            for question in dataset.rag_questions:
-                sources = search_chunks(question.question, bm25, chunks, k)
+            for question in tqdm(dataset.rag_questions, desc="Searching"):
+                sources = search_chunks(question.question, bm25, chunks, k)[1]
 
                 search_results.append(
                     MinimalSearchResults(
@@ -162,7 +173,38 @@ class CommandLineInterface():
             None
         """
 
-        pass
+        try:
+            if not query.strip():
+                raise ValueError("Cannot generate answer for an empty query")
+
+            bm25, chunks = (
+                load_retrieval_index(self.config.retrieval_index_path,
+                                     self.config.chunks_output_path))
+
+            chunks_found, sources = search_chunks(query, bm25, chunks, k)
+
+            model = load_model(self.config.model_name)
+
+            context = augment_context(chunks_found,
+                                      self.config.max_context_length)
+
+            answer_text = (
+                generate_answer(query, context, model,
+                                self.config.generation_max_new_tokens,
+                                self.config.generation_temperature,
+                                self.config.generation_top_p))
+
+            result = StudentSearchResultsAndAnswer(
+                search_results=[MinimalAnswer(
+                    question_id="question_query",
+                    question=query,
+                    retrieved_sources=sources,
+                    answer=answer_text)], k=k)
+
+            print(result.model_dump_json(indent=4))
+
+        except ValueError as error:
+            print(f"ERROR: {error}")
 
     def answer_dataset(self,
                        student_search_results_path: str,
@@ -177,4 +219,120 @@ class CommandLineInterface():
                 StudentSearchResultsAndAnswer JSON file will be saved.
         """
 
-        pass
+        try:
+            model = load_model(self.config.model_name)
+
+            data = load_json(Path(student_search_results_path))
+            results = StudentSearchResults.model_validate(data)
+
+            chunks = load_retrieval_index(self.config.retrieval_index_path,
+                                          self.config.chunks_output_path)[1]
+
+            chunk_index = build_chunk_index(chunks)
+
+            answers = []
+
+            for result in tqdm(results.search_results,
+                               desc="Generating answers"):
+                if not result.question.strip():
+                    answer_text = "ERROR: empty query"
+
+                    print(f"WARNING: skipping empty query for "
+                          f"question_id={result.question_id}")
+
+                else:
+                    matched_chunks = match_chunks(result.retrieved_sources,
+                                                  chunk_index)
+
+                    context = augment_context(matched_chunks,
+                                              self.config.max_context_length)
+
+                    answer_text = (
+                        generate_answer(
+                            result.question, context, model,
+                            self.config.generation_max_new_tokens,
+                            self.config.generation_temperature,
+                            self.config.generation_top_p))
+
+                answers.append(MinimalAnswer(
+                    question_id=result.question_id,
+                    question=result.question,
+                    retrieved_sources=result.retrieved_sources,
+                    answer=answer_text))
+
+            results_answers = StudentSearchResultsAndAnswer(
+                search_results=answers, k=results.k)
+
+            output_path = (
+                Path(save_directory) / Path(student_search_results_path).name)
+
+            save_json(output_path, results_answers)
+
+            print(f"Saved student_search_results_and_answer to {output_path}")
+
+        except ValidationError as error:
+            print(f"ERROR: {error.errors()[0]}")
+        except ValueError as error:
+            print(f"ERROR: {error}")
+
+    def evaluate(self,
+                 student_search_results_path: str,
+                 dataset_path: str,
+                 k: int = 10,
+                 max_context_length: int = 2000) -> None:
+        """
+        Evaluates retrieved sources against ground truth annotations.
+
+        Args:
+            student_search_results_path (str): Path to a
+                StudentSearchResults JSON file.
+            dataset_path (str): Path to the AnsweredQuestions dataset.
+            k (int): Maximum k for recall reporting.
+            max_context_length (int): Kept for parity with the
+                moulinette CLI signature; unused in the recall
+                computation itself.
+
+        Returns:
+            None
+        """
+
+        try:
+            data = load_json(Path(student_search_results_path))
+            student_results = StudentSearchResults.model_validate(data)
+
+            reference_data = load_json(Path(dataset_path))
+            reference_dataset = RagDataset.model_validate(reference_data)
+
+            reference_questions = [
+                question for question in reference_dataset.rag_questions
+                if isinstance(question, AnsweredQuestion)
+            ]
+
+            student_sources_by_id = {
+                result.question_id: result.retrieved_sources
+                for result in student_results.search_results
+            }
+
+            k_values = [k_value for k_value in (1, 3, 5, 10)
+                        if k_value <= k]
+            if k not in k_values:
+                k_values.append(k)
+
+            results = evaluate_search_results(student_sources_by_id,
+                                              reference_questions,
+                                              k_values)
+
+            print("Evaluation Results")
+            print("=" * 40)
+            print(f"Questions evaluated: "
+                  f"{results['questions_evaluated']}")
+            print()
+
+            for k_value in k_values:
+                print(f"Recall@{k_value}: "
+                      f"{results[f'recall@{k_value}']:.3f}")
+
+        except ValidationError as error:
+            print(f"ERROR: {error.errors()[0]['msg']}")
+        except ValueError as error:
+            print(f"ERROR: {error}")

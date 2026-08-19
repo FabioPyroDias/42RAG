@@ -7,7 +7,7 @@ the most relevant code and documentation contexts.
 from typing import List
 from pathlib import Path
 from student.file_manager import load_json
-from student.models import ChunkCollection, MinimalSource
+from student.models import Chunk, ChunkCollection, MinimalSource
 import bm25s
 
 
@@ -51,7 +51,7 @@ def load_retrieval_index(retrieval_index_path: str,
 def search_chunks(query: str,
                   bm25: bm25s.BM25,
                   chunks: ChunkCollection,
-                  k: int) -> List[MinimalSource]:
+                  k: int) -> tuple[List[Chunk], List[MinimalSource]]:
     """
     Searches document chunks for the top-k most relevant matches using BM25.
 
@@ -77,11 +77,65 @@ def search_chunks(query: str,
 
     top_chunks = bm25.retrieve(tokens, corpus=chunks.chunks, k=k)
 
+    chunks_found = []
     sources = []
+
     for chunk in top_chunks.documents[0]:
+        chunks_found.append(chunk)
         sources.append(
             MinimalSource(file_path=chunk.file_path,
                           first_character_index=chunk.first_character_index,
                           last_character_index=chunk.last_character_index))
 
-    return sources
+    return chunks_found, sources
+
+
+def build_chunk_index(chunks: ChunkCollection) -> dict[
+  tuple[str, int, int], Chunk]:
+    """
+    Creates a dictionary mapping source coordinates to chunk objects.
+
+    Args:
+        chunks (ChunkCollection): The collection of chunks to index.
+
+    Returns:
+        dict[tuple[str, int, int], Chunk]: Mapping from
+            (file_path, first_index, last_index) to Chunk.
+    """
+
+    chunk_index = {}
+
+    for chunk in chunks.chunks:
+        key = (chunk.file_path,
+               chunk.first_character_index,
+               chunk.last_character_index)
+        chunk_index[key] = chunk
+
+    return chunk_index
+
+
+def match_chunks(sources: List[MinimalSource],
+                 chunk_index: dict[tuple[str, int, int],
+                                   Chunk]) -> List[Chunk]:
+    """
+    Maps source references to their corresponding full Chunk objects.
+
+    Args:
+        sources (List[MinimalSource]): Source references to match.
+        chunk_index (dict): Mapping built by build_chunk_index.
+
+    Returns:
+        List[Chunk]: The matched chunks. Sources with no match are skipped.
+    """
+
+    matched_chunks = []
+
+    for source in sources:
+        key = (source.file_path,
+               source.first_character_index,
+               source.last_character_index)
+
+        if key in chunk_index:
+            matched_chunks.append(chunk_index[key])
+
+    return matched_chunks

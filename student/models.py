@@ -5,7 +5,7 @@ deserialize documents, questions, search results, and generated answers
 across the RAG pipeline.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Sequence
 import uuid
 
@@ -83,9 +83,10 @@ class MinimalSearchResults(BaseModel):
         retrieved_sources (List[MinimalSource]): List of sources found
             by the search.
     """
+    model_config = ConfigDict(populate_by_name=True)
 
     question_id: str
-    question: str = Field(serialization_alias="question_str")
+    question: str = Field(alias="question_str")
     retrieved_sources: List[MinimalSource]
 
 

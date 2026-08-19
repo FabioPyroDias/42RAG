@@ -6,6 +6,7 @@ to preserve context without breaking code blocks.
 
 from pathlib import Path
 from typing import List
+from tqdm import tqdm
 from student.file_manager import get_indexable_files, load_text_file
 from student.models import Chunk
 from student.indexing.utils import create_chunk
@@ -90,7 +91,7 @@ def generate_chunks(path: Path, max_chunk_size: int) -> List[Chunk]:
     paths = get_indexable_files(path)
     chunks = []
 
-    for index_path in paths:
+    for index_path in tqdm(paths, desc="Indexing files"):
         content = load_text_file(index_path)
         chunks += generate_file_chunks(index_path, content, max_chunk_size)
 
