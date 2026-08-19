@@ -1,7 +1,7 @@
 """Chunking and indexing utilities."""
 
 from pathlib import Path
-from student.models import Chunk
+from src.models import Chunk
 
 
 def create_chunk(path: Path,

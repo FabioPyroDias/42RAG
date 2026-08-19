@@ -7,24 +7,24 @@ search context and generate answers.
 from pathlib import Path
 from tqdm import tqdm
 from pydantic import ValidationError
-from student.config import RAGConfig
-from student.file_manager import save_json, load_dataset, load_json
-from student.models import (ChunkCollection,
+from src.config import RAGConfig
+from src.file_manager import save_json, load_dataset, load_json
+from src.models import (ChunkCollection,
                             MinimalSearchResults,
                             StudentSearchResults,
                             MinimalAnswer,
                             StudentSearchResultsAndAnswer,
                             RagDataset,
                             AnsweredQuestion)
-from student.indexing.chunking import generate_chunks
-from student.indexing.indexer import generate_bm25_index
-from student.retrieval.retriever import (load_retrieval_index,
+from src.indexing.chunking import generate_chunks
+from src.indexing.indexer import generate_bm25_index
+from src.retrieval.retriever import (load_retrieval_index,
                                          search_chunks,
                                          build_chunk_index,
                                          match_chunks)
-from student.generation.augmenter import augment_context
-from student.generation.generator import load_model, generate_answer
-from student.evaluation.evaluator import evaluate_search_results
+from src.generation.augmenter import augment_context
+from src.generation.generator import load_model, generate_answer
+from src.evaluation.evaluator import evaluate_search_results
 
 
 class CommandLineInterface():

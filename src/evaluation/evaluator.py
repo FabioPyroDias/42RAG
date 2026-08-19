@@ -9,7 +9,7 @@ sources for that question.
 """
 
 from typing import List
-from student.models import MinimalSource, AnsweredQuestion
+from src.models import MinimalSource, AnsweredQuestion
 
 
 OVERLAP_THRESHOLD = 0.05

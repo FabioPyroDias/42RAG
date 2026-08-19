@@ -6,8 +6,8 @@ the most relevant code and documentation contexts.
 
 from typing import List
 from pathlib import Path
-from student.file_manager import load_json
-from student.models import Chunk, ChunkCollection, MinimalSource
+from src.file_manager import load_json
+from src.models import Chunk, ChunkCollection, MinimalSource
 import bm25s
 
 

@@ -6,9 +6,9 @@ JSON input and output.
 
 from typing import Any, List
 from pathlib import Path
-from student.models import RagDataset
+from src.models import RagDataset
 from pydantic import BaseModel, ValidationError
-from student.consts import TEXT_EXTENSIONS, CODE_EXTENSIONS
+from src.consts import TEXT_EXTENSIONS, CODE_EXTENSIONS
 import json
 
 

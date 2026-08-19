@@ -5,7 +5,7 @@ handles saving and loading it for searches.
 """
 
 from typing import List
-from student.models import Chunk
+from src.models import Chunk
 import bm25s
 
 

@@ -1,5 +1,5 @@
 import fire
-from student.command_line_interface import CommandLineInterface
+from src.command_line_interface import CommandLineInterface
 
 if __name__ == "__main__":
     try:

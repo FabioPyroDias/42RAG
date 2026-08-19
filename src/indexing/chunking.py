@@ -7,9 +7,9 @@ to preserve context without breaking code blocks.
 from pathlib import Path
 from typing import List
 from tqdm import tqdm
-from student.file_manager import get_indexable_files, load_text_file
-from student.models import Chunk
-from student.indexing.utils import create_chunk
+from src.file_manager import get_indexable_files, load_text_file
+from src.models import Chunk
+from src.indexing.utils import create_chunk
 
 
 def generate_file_chunks(path: Path,

@@ -5,7 +5,7 @@ prompts for generation and context enhancement.
 """
 
 from typing import List
-from student.models import Chunk
+from src.models import Chunk
 
 
 def augment_context(chunks: List[Chunk], max_context_length: int) -> str:
