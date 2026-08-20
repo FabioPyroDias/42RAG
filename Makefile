@@ -105,23 +105,23 @@ answer: install index
 answer_dataset: install index search_dataset
 	@if [ -d /sgoinfre ]; then \
 		HF_HOME=$(HF_HOME_SG) UV_CACHE_DIR=$(UV_CACHE_DIR_SG) $(PYTHON) src answer_dataset \
-		--src_search_results_path data/output/search_results/dataset_docs_public.json \
+		--student_search_results_path data/output/search_results/dataset_docs_public.json \
 		--save_directory data/output/search_results_and_answer; \
 	else \
 		$(PYTHON) src answer_dataset \
-		--src_search_results_path data/output/search_results/dataset_docs_public.json \
+		--student_search_results_path data/output/search_results/dataset_docs_public.json \
 		--save_directory data/output/search_results_and_answer; \
 	fi
 
 evaluate: install index search_dataset
 	@if [ -d /sgoinfre ]; then \
 		HF_HOME=$(HF_HOME_SG) UV_CACHE_DIR=$(UV_CACHE_DIR_SG) $(PYTHON) src evaluate \
-		--src_search_results_path data/output/search_results/dataset_docs_public.json \
+		--student_search_results_path data/output/search_results/dataset_docs_public.json \
 		--dataset_path data/datasets/AnsweredQuestions/dataset_docs_public.json \
 		--k 10; \
 	else \
 		$(PYTHON) src evaluate \
-		--src_search_results_path data/output/search_results/dataset_docs_public.json \
+		--student_search_results_path data/output/search_results/dataset_docs_public.json \
 		--dataset_path data/datasets/AnsweredQuestions/dataset_docs_public.json \
 		--k 10; \
 	fi

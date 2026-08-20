@@ -30,16 +30,23 @@ def load_retrieval_index(retrieval_index_path: str,
     """
 
     try:
+        # Load BM25 index from disk
         index = bm25s.BM25.load(retrieval_index_path)
 
     except FileNotFoundError:
         raise ValueError(f"Index not found in {retrieval_index_path}. "
                          f"Please run index first")
 
+    # Read saved chunks JSON file from disk
     json_data = load_json(Path(chunks_output_path))
+
+    # Validate JSON into a ChunkCollection Pydantic model
     collection = ChunkCollection.model_validate(json_data)
+
+    # Extract chunk list to verify content existence
     chunks = collection.chunks
 
+    # If the chunks don't exist, raise Error
     if not chunks:
         raise ValueError(f"Chunks not found in {chunks_output_path}. "
                          f"The file exists but is empty. "
@@ -70,16 +77,22 @@ def search_chunks(query: str,
         ValueError
     """
 
+    # Ensure top-k count is a positive integer
     if k <= 0:
         raise ValueError("k needs to be positive")
 
+    # Tokenize search query into terms expected by BM25
     tokens = bm25s.tokenize([query])
 
+    # Query BM25 index to retrieve the top-k relevant document chunks
     top_chunks = bm25.retrieve(tokens, corpus=chunks.chunks, k=k)
 
+    # Lists for matching Chunk objects and sources
     chunks_found = []
     sources = []
 
+    # Map retrieved document chunks to Chunk instances
+    #   and MinimalSource metadata models.
     for chunk in top_chunks.documents[0]:
         chunks_found.append(chunk)
         sources.append(
@@ -103,12 +116,17 @@ def build_chunk_index(chunks: ChunkCollection) -> dict[
             (file_path, first_index, last_index) to Chunk.
     """
 
+    # Index dictionary for chunk retrieval
     chunk_index = {}
 
+    # Iterate through chunks to populate the coordinate index dictionary
     for chunk in chunks.chunks:
+        # Create key using file path and character boundaries
         key = (chunk.file_path,
                chunk.first_character_index,
                chunk.last_character_index)
+
+        # Map key to its corresponding Chunk instance
         chunk_index[key] = chunk
 
     return chunk_index
@@ -128,13 +146,17 @@ def match_chunks(sources: List[MinimalSource],
         List[Chunk]: The matched chunks. Sources with no match are skipped.
     """
 
+    # List storing matched Chunk objects
     matched_chunks = []
 
+    # Iterate through source references to match corresponding chunks
     for source in sources:
+        # Create key using file path and character boundaries
         key = (source.file_path,
                source.first_character_index,
                source.last_character_index)
 
+        # Append matched chunk if key exists in index dictionary
         if key in chunk_index:
             matched_chunks.append(chunk_index[key])
 
