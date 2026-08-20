@@ -77,14 +77,14 @@ index: install
 		$(PYTHON) src index 2000; \
 	fi
 
-search: install index
+search: install
 	@if [ -d /sgoinfre ]; then \
 		HF_HOME=$(HF_HOME_SG) UV_CACHE_DIR=$(UV_CACHE_DIR_SG) $(PYTHON) src search "How to configure OpenAI server?"; \
 	else \
 		$(PYTHON) src search "How to configure OpenAI server?"; \
 	fi
 
-search_dataset: install index
+search_dataset: install
 	@if [ -d /sgoinfre ]; then \
 		HF_HOME=$(HF_HOME_SG) UV_CACHE_DIR=$(UV_CACHE_DIR_SG) $(PYTHON) src search_dataset \
 		--dataset_path data/datasets/UnansweredQuestions/dataset_docs_public.json \
@@ -95,14 +95,14 @@ search_dataset: install index
 		--save_directory data/output/search_results --k 10; \
 	fi
 
-answer: install index
+answer: install
 	@if [ -d /sgoinfre ]; then \
 		HF_HOME=$(HF_HOME_SG) UV_CACHE_DIR=$(UV_CACHE_DIR_SG) $(PYTHON) src answer "How to configure OpenAI server?" --k 10; \
 	else \
 		$(PYTHON) src answer "How to configure OpenAI server?" --k 10; \
 	fi
 
-answer_dataset: install index search_dataset
+answer_dataset: install
 	@if [ -d /sgoinfre ]; then \
 		HF_HOME=$(HF_HOME_SG) UV_CACHE_DIR=$(UV_CACHE_DIR_SG) $(PYTHON) src answer_dataset \
 		--student_search_results_path data/output/search_results/dataset_docs_public.json \
@@ -113,7 +113,7 @@ answer_dataset: install index search_dataset
 		--save_directory data/output/search_results_and_answer; \
 	fi
 
-evaluate: install index search_dataset
+evaluate: install
 	@if [ -d /sgoinfre ]; then \
 		HF_HOME=$(HF_HOME_SG) UV_CACHE_DIR=$(UV_CACHE_DIR_SG) $(PYTHON) src evaluate \
 		--student_search_results_path data/output/search_results/dataset_docs_public.json \

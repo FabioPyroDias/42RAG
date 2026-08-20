@@ -77,6 +77,11 @@ def search_chunks(query: str,
         ValueError
     """
 
+    try:
+        k = int(k)
+    except (ValueError, TypeError):
+        raise ValueError("k needs to be an integer")
+
     # Ensure top-k count is a positive integer
     if k <= 0:
         raise ValueError("k needs to be positive")

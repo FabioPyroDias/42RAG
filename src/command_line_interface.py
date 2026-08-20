@@ -109,6 +109,10 @@ class CommandLineInterface():
         """
 
         try:
+            # If query string is empty, raise ValueError
+            if not query.strip():
+                raise ValueError("Query cannot be empty")
+
             # Load the BM25 index and corresponding chunk dataset from disk
             bm25, chunks = (
                 load_retrieval_index(self.config.retrieval_index_path,
