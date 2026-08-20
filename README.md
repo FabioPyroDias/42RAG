@@ -201,7 +201,7 @@ make evaluate
 │   └── README_Moulinette.md
 ├── pyproject.toml
 ├── README.md
-├── student
+├── src
 │   ├── command_line_interface.py
 │   ├── config.py
 │   ├── consts.py
